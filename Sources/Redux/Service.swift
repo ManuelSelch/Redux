@@ -2,11 +2,11 @@ import Foundation
 import Combine
 import Moya
 
-protocol Service {
+public protocol IService {
     
 }
 
-extension Service {
+public extension IService {
     func just<T>(_ event: T) -> AnyPublisher<T, Error> {
         return Just(event)
             .setFailureType(to: Error.self)
