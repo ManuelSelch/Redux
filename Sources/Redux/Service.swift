@@ -2,10 +2,14 @@ import Foundation
 import Combine
 import Moya
 
+@available(iOS 16.0, *)
+@available(macOS 12.0, *)
 public protocol IService {
      
 }
 
+@available(iOS 16.0, *)
+@available(macOS 12.0, *)
 public extension IService {
     func just<T>(_ event: T) -> AnyPublisher<T, Error> {
         return Just(event)
