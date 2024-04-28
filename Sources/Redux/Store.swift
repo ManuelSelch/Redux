@@ -7,8 +7,6 @@ public typealias Reducer<State, Action, Dependencies> = (inout State, Action, De
 
 @available(iOS 16.0, *)
 public typealias Middleware<State, Action, Dependencies> = (State, Action, Dependencies) -> AnyPublisher<Action, Never>?
-
-
  
 @available(iOS 16.0, *)
 public class Store<State, Action, Dependencies>: ObservableObject {
