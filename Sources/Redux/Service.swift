@@ -3,7 +3,7 @@ import Combine
 import Moya
 
 public protocol IService {
-    
+     
 }
 
 public extension IService {
