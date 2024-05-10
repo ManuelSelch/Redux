@@ -20,22 +20,24 @@ public class Store<State, Action, Dependencies>: ObservableObject {
     public let dependencies: Dependencies
     private let reducer: Reducer<State, Action, Dependencies>
     private let middlewares:  [Middleware<State, Action, Dependencies>]
+    
+    var onError: (Error) -> ()
 
     public init(
         initialState: State, 
         reducer: @escaping Reducer<State, Action, Dependencies>,
         dependencies: Dependencies,
-        middlewares: [Middleware<State, Action, Dependencies>] = []
+        middlewares: [Middleware<State, Action, Dependencies>] = [],
+        onError: @escaping (Error) -> () = {_ in}
     ) {
         self.state = initialState
         self.reducer = reducer
         self.dependencies = dependencies
         self.middlewares = middlewares
+        self.onError = onError
     }
 
     public func send(_ action: Action) {
-        handleLog(action)
-        
         guard let effect = reducer(&state, action, dependencies) else {
             return
         }
@@ -47,7 +49,7 @@ public class Store<State, Action, Dependencies>: ObservableObject {
                     case .finished:
                         break
                     case .failure(let e):
-                        self.handleError(e)
+                        self.onError(e)
                 
                 }
             }, receiveValue: send)
@@ -90,13 +92,5 @@ public class Store<State, Action, Dependencies>: ObservableObject {
             .assign(to: &derivedStore.$state)
         
         return derivedStore
-    }
-    
-    public func handleError(_ error: Error) {
-        
-    }
-    
-    public func handleLog(_ action: Action) {
-       
     }
 }
