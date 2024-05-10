@@ -21,20 +21,20 @@ public class Store<State, Action, Dependencies>: ObservableObject {
     private let reducer: Reducer<State, Action, Dependencies>
     private let middlewares:  [Middleware<State, Action, Dependencies>]
     
-    var onError: (Error) -> ()
+    var errorAction: ((Error) -> Action)?
 
     public init(
         initialState: State, 
         reducer: @escaping Reducer<State, Action, Dependencies>,
         dependencies: Dependencies,
         middlewares: [Middleware<State, Action, Dependencies>] = [],
-        onError: @escaping (Error) -> () = {_ in}
+        errorAction: ((Error) -> Action)? = nil
     ) {
         self.state = initialState
         self.reducer = reducer
         self.dependencies = dependencies
         self.middlewares = middlewares
-        self.onError = onError
+        self.errorAction = errorAction
     }
 
     public func send(_ action: Action) {
@@ -49,8 +49,9 @@ public class Store<State, Action, Dependencies>: ObservableObject {
                     case .finished:
                         break
                     case .failure(let e):
-                        self.onError(e)
-                
+                        if let errorAction = self.errorAction {
+                            self.send(errorAction(e))
+                        }
                 }
             }, receiveValue: send)
             .store(in: &cancellables)
