@@ -1,11 +1,6 @@
 import Foundation
 import Combine
 
-
-@available(iOS 16.0, *)
-@available(macOS 12.0, *)
-public typealias Reducer<State, Action, Dependencies> = (inout State, Action, Dependencies) -> AnyPublisher<Action, Error>?
-
 @available(iOS 16.0, *)
 @available(macOS 12.0, *)
 public typealias Middleware<State, Action, Dependencies> = (State, Action, Dependencies) -> AnyPublisher<Action, Never>?
@@ -18,14 +13,14 @@ public class Store<State, Action, Dependencies>: ObservableObject {
     private var cancellables: Set<AnyCancellable> = []
     
     public let dependencies: Dependencies
-    private let reducer: Reducer<State, Action, Dependencies>
+    private let reducer: (inout State, Action, Dependencies) -> AnyPublisher<Action, Error>?
     private let middlewares:  [Middleware<State, Action, Dependencies>]
     
     var errorAction: ((Error) -> Action)?
 
     public init(
         initialState: State, 
-        reducer: @escaping Reducer<State, Action, Dependencies>,
+        reducer: @escaping(inout State, Action, Dependencies) -> AnyPublisher<Action, Error>,
         dependencies: Dependencies,
         middlewares: [Middleware<State, Action, Dependencies>] = [],
         errorAction: ((Error) -> Action)? = nil
