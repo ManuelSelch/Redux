@@ -3,10 +3,6 @@ import Combine
 
 @available(iOS 16.0, *)
 @available(macOS 12.0, *)
-public typealias StoreOf<R: Reducer> = Store<R.State, R.Action, R.Dependency>
-
-@available(iOS 16.0, *)
-@available(macOS 12.0, *)
 public protocol Reducer<State, Action, Dependency> {
     associatedtype State
     associatedtype Action
