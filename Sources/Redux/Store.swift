@@ -1,16 +1,11 @@
 import Foundation
 import Combine
 
-@available(iOS 16.0, *)
-@available(macOS 12.0, *)
+
 public typealias StoreOf<R: Reducer> = Store<R.State, R.Action, R.Dependency>
 
-@available(iOS 16.0, *)
-@available(macOS 12.0, *)
 public typealias Middleware<State, Action, Dependencies> = (State, Action, Dependencies) -> AnyPublisher<Action, Never>?
- 
-@available(iOS 16.0, *)
-@available(macOS 12.0, *)
+
 public class Store<State, Action, Dependencies>: ObservableObject {
     @Published public private(set) var state: State
     
