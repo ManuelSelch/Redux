@@ -1,6 +1,6 @@
 import Foundation
 import Combine
-
+import SwiftUI
 
 public typealias StoreOf<R: Reducer> = Store<R.State, R.Action, R.Dependency>
 
@@ -87,5 +87,16 @@ public class Store<State, Action, Dependencies>: ObservableObject {
             .assign(to: &derivedStore.$state)
         
         return derivedStore
+    }
+    
+  
+    public func binding<Value>(
+        for keyPath: KeyPath<State, Value>,
+        action: @escaping (Value) -> Action
+    ) -> Binding<Value> {
+        return Binding(
+            get: { self.state[keyPath: keyPath] },
+            set: { self.send(action($0)) }
+        )
     }
 }
