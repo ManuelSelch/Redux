@@ -9,10 +9,10 @@ enum TestRoute: Codable {
 }
 
 final class RouteReducerTests: XCTestCase {
-    var store: StoreOf<RouteModule<TestRoute>>!
+    var store: StoreOf<RouteFeature<TestRoute>>!
     
     override func setUp() {
-        store = .init(initialState: .init(), reducer: RouteModule.reduce, dependencies: .init())
+        store = .init(initialState: .init(), reducer: RouteFeature.reduce, dependencies: .init())
     }
     
     func testStack() throws {

@@ -1,26 +1,44 @@
 import Foundation
 import Combine
+import SwiftUI
 
-public enum Route<Screen: Equatable>: Equatable {
-    case push(Screen)
-    case sheet(Screen)
-}
 
-public struct RouteFeature<Route: Codable & Equatable>: Reducer, Codable {
-    public enum Action: Codable {
-        case push(Route)
-        case set([Route])
-        case pop
-        
-        case presentSheet(Route)
-        case dismissSheet
+public struct RouterFeature<Route: Equatable & Hashable & Identifiable >: Reducer, Codable {
+    public enum Action {
+        case updateRoutes([Route])
+        case updateSheet(Route?)
     }
     
-    public struct State: Codable, Equatable {
-        public var routes: [Route] = []
-        public var sheet: Route?
+    public struct State: Equatable {
+        var root: Route
+        var routes: [Route] = []
+        var sheet: Route?
         
-        public init(){}
+        public init(root: Route){
+            self.root = root
+        }
+        
+        public mutating func presentSheet(_ route: Route) {
+            self.sheet = route
+        }
+        
+        public mutating func presentCover(_ route: Route) {
+            self.root = route
+            self.routes = []
+        }
+        
+        public mutating func dismiss() {
+            if sheet != nil {
+                sheet = nil
+            } else if !routes.isEmpty {
+                routes.removeLast()
+            }
+        }
+        
+        public mutating func push(_ route: Route) {
+            routes.append(route)
+        }
+        
     }
     
     public struct Dependency {
@@ -29,17 +47,11 @@ public struct RouteFeature<Route: Codable & Equatable>: Reducer, Codable {
     
     public static func reduce(_ state: inout State, _ action: Action, _ env: Dependency) -> AnyPublisher<Action, Error> {
 
-        switch(action){
-        case .push(let route):
-            state.routes.append(route)
-        case .pop:
-            state.routes.removeLast()
-        case .set(let routes):
+        switch(action) {
+        case let .updateRoutes(routes):
             state.routes = routes
-        case .presentSheet(let route):
+        case let .updateSheet(route):
             state.sheet = route
-        case .dismissSheet:
-            state.sheet = nil
         }
         
         return Empty().eraseToAnyPublisher()
@@ -48,4 +60,7 @@ public struct RouteFeature<Route: Codable & Equatable>: Reducer, Codable {
     }
     
 }
+
+
+
 

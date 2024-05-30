@@ -16,3 +16,22 @@ public extension Reducer {
             .eraseToAnyPublisher()
     }
 }
+
+
+public extension AnyPublisher {
+    static func send(_ action: Output) -> AnyPublisher<Output, Failure> {
+        return Just(action)
+            .setFailureType(to: Failure.self)
+            .eraseToAnyPublisher()
+    }
+    
+    static func merge(_ publishers: [AnyPublisher<Output, Failure>]) -> AnyPublisher<Output, Failure> {
+        return AnyPublisher.merge(publishers)
+    }
+    
+    static var none: AnyPublisher<Output, Failure> {
+        Empty()
+            .setFailureType(to: Failure.self)
+            .eraseToAnyPublisher()
+    }
+}

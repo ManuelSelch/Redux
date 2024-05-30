@@ -1,118 +1,36 @@
 import SwiftUI
 
-public struct RouteView<
-    Screen: Codable & Equatable & Hashable & Identifiable,
-    ScreenContent: View
->: View
-{
-    @Binding public var routes: [Route<Screen>]
-    public let screenContent: (Screen) -> ScreenContent
+public struct RouterView<
+    Route: Equatable & Hashable & Identifiable,
+    Content: View
+>: View {
+    @ObservedObject var store: StoreOf<RouterFeature<Route>>
+    // Holds our root view content
+    private let content: (Route) -> Content
     
-    @State public var path: [Screen] = []
+    public init(
+        store: StoreOf<RouterFeature<Route>>,
+        content: @escaping (Route) -> Content)
+    {
+        self.store = store
+        self.content = content
+    }
     
     public var body: some View {
-        NavigationStack(path: $path) {
-            VStack {
-                if let screen = path.first {
-                    screenContent(screen)
-                } else {
-                    EmptyView()
+        NavigationStack(path: Binding(
+            get: { store.state.routes },
+            set: { store.send(.updateRoutes($0)) }
+        )) {
+            content(store.state.root)
+                .navigationDestination(for: Route.self) { route in
+                    content(route)
                 }
-            }
-            .navigationDestination(for: Screen.self) { screen in
-                screenContent(screen)
-            }
-            
         }
-        .onChange(of: routes) {
-            path = routes.compactMap { route in
-                if case .push(let screen) = route {
-                    return screen
-                }
-                return nil
-            }
-        }
-        
-        .sheet(item: Binding<Optional<Screen>>(
-            get: {
-                routes.compactMap {
-                    if case .sheet(let screen) = $0 {
-                        return screen
-                    }
-                    return nil
-                }.first
-            },
-            set: { screen in
-                if let screen = screen {
-                    routes.removeAll {
-                        if case .sheet(let s) = $0, s == screen {
-                            return true
-                        }
-                        return false
-                    }
-                }
-            }
-        )) { screen in
-            NavigationStack {
-                screenContent(screen)
-            }
+        .sheet(item: Binding(
+            get: { store.state.sheet },
+            set: { store.send(.updateSheet($0)) }
+        )) { route in
+            content(route)
         }
     }
 }
-
-
-import Combine
-
-struct TestFeature: Reducer {
-    struct State {
-        var routes: [Route<Screen>]
-    }
-    
-    enum Action {
-        case router([Route<Screen>])
-        case buttonTapped
-    }
-    
-    enum Screen: Codable, Identifiable {
-        case home
-        case login
-        
-        var id: Self {self}
-    }
-    
-    struct Dependency {
-        
-    }
-    
-    public static func reduce(_ state: inout State, _ action: Action, _ env: Dependency) -> AnyPublisher<Action, Error> {
-        switch(action) {
-        case .buttonTapped:
-            state.routes.append(.push(.home))
-        case let .router(routes):
-            state.routes = routes
-        }
-        return Empty().eraseToAnyPublisher()
-    }
-}
-
-struct TestView: View {
-    let store: StoreOf<TestFeature>
-    
-    var body: some View {
-        RouteView(
-            routes: Binding(
-                get: {store.state.routes},
-                set: {store.send(.router($0))}
-            )
-        ) { screen in
-            switch(screen) {
-            case .home:
-                Text("Home")
-            case .login:
-                Text("Login")
-            }
-        }
-    }
-}
-
-
