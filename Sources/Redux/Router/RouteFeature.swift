@@ -1,7 +1,12 @@
 import Foundation
 import Combine
 
-public struct RouteModule<Route: Codable & Equatable>: Reducer, Codable {
+public enum Route<Screen: Equatable>: Equatable {
+    case push(Screen)
+    case sheet(Screen)
+}
+
+public struct RouteFeature<Route: Codable & Equatable>: Reducer, Codable {
     public enum Action: Codable {
         case push(Route)
         case set([Route])
@@ -43,6 +48,4 @@ public struct RouteModule<Route: Codable & Equatable>: Reducer, Codable {
     }
     
 }
-
-
 
