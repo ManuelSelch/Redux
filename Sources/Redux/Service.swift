@@ -2,19 +2,8 @@ import Foundation
 import Combine
 import Moya
 
-public protocol IService {
-     
-}
-
-
-public extension IService {
-    func just<T>(_ event: T) -> AnyPublisher<T, Error> {
-        return Just(event)
-            .setFailureType(to: Error.self)
-            .eraseToAnyPublisher()
-    }
-    
-    func request<Response: Decodable, TargetType>(_ provider: MoyaProvider<TargetType>, _ method: TargetType) async throws -> Response {
+public struct Service {
+    public static func request<Response: Decodable, TargetType>(_ provider: MoyaProvider<TargetType>, _ method: TargetType) async throws -> Response {
         return try await withCheckedThrowingContinuation { continuation in
             provider.request(method){ result in
                 switch result {

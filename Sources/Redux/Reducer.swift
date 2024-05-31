@@ -34,4 +34,18 @@ public extension AnyPublisher {
             .setFailureType(to: Failure.self)
             .eraseToAnyPublisher()
     }
+    
+    static func run( 
+        _ operation: @escaping (
+            (Result<Output, Failure>) -> Void
+        ) async -> Void
+    ) -> AnyPublisher<Output, Failure>
+    {
+        return Future<Output, Failure> { promise in
+            Task {
+                await operation(promise)
+            }
+        }
+        .eraseToAnyPublisher()
+    }
 }
