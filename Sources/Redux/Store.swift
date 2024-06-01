@@ -2,39 +2,29 @@ import Foundation
 import Combine
 import SwiftUI
 
-public typealias StoreOf<R: Reducer> = Store<R.State, R.Action, R.Dependency>
+public typealias StoreOf<R: Reducer> = Store<R.State, R.Action>
 
-public typealias Middleware<State, Action, Dependencies> = (State, Action, Dependencies) -> AnyPublisher<Action, Never>?
-
-public class Store<State, Action, Dependencies>: ObservableObject {
+public class Store<State, Action>: ObservableObject {
     @Published public private(set) var state: State
     
     private var cancellables: Set<AnyCancellable> = []
     
-    public let dependencies: Dependencies
-    private let reducer: (inout State, Action, Dependencies) -> AnyPublisher<Action, Error>?
-    private let middlewares:  [Middleware<State, Action, Dependencies>]
+    private let reducer: any Reducer<State, Action>
     
     var errorAction: ((Error) -> Action)?
 
     public init(
         initialState: State, 
-        reducer: @escaping(inout State, Action, Dependencies) -> AnyPublisher<Action, Error>,
-        dependencies: Dependencies,
-        middlewares: [Middleware<State, Action, Dependencies>] = [],
+        reducer: any Reducer<State, Action>,
         errorAction: ((Error) -> Action)? = nil
     ) {
         self.state = initialState
         self.reducer = reducer
-        self.dependencies = dependencies
-        self.middlewares = middlewares
         self.errorAction = errorAction
     }
 
     public func send(_ action: Action) {
-        guard let effect = reducer(&state, action, dependencies) else {
-            return
-        }
+        let effect = reducer.reduce(&state, action)
  
         effect
             .receive(on: DispatchQueue.main)
@@ -49,35 +39,17 @@ public class Store<State, Action, Dependencies>: ObservableObject {
                 }
             }, receiveValue: send)
             .store(in: &cancellables)
-        
-        
-        middlewares.forEach { middleware in
-            
-            guard let publisher = middleware(state, action, dependencies) else {
-                return
-            }
-            
-            publisher
-                .receive(on: DispatchQueue.main)
-                .sink(receiveValue: send)
-                .store(in: &cancellables)
-        }
     }
     
     
-    public func lift<DerivedState: Equatable, ExtractedAction, DerivedDependencies>(
+    public func lift<DerivedState: Equatable, ExtractedAction>(
         _ deriveState: @escaping (State) -> DerivedState,
-        _ embedAction: @escaping (ExtractedAction) -> Action,
-        _ derivedDependencies: DerivedDependencies
-    ) -> Store<DerivedState, ExtractedAction, DerivedDependencies> {
+        _ embedAction: @escaping (ExtractedAction) -> Action
+    ) -> Store<DerivedState, ExtractedAction> {
         
-        let derivedStore = Store<DerivedState, ExtractedAction, DerivedDependencies>(
+        let derivedStore = Store<DerivedState, ExtractedAction>(
             initialState: deriveState(state),
-            reducer: { derivedState, action, dependencies  in
-                self.send(embedAction(action))
-                return Empty().eraseToAnyPublisher()
-            },
-            dependencies: derivedDependencies
+            reducer: LiftedReducer(parentStore: self, embedAction: embedAction)
         )
         
         $state
@@ -98,5 +70,15 @@ public class Store<State, Action, Dependencies>: ObservableObject {
             get: { self.state[keyPath: keyPath] },
             set: { self.send(action($0)) }
         )
+    }
+}
+
+struct LiftedReducer<ParentState, ParentAction, DerivedState, ExtractedAction>: Reducer {
+    let parentStore: Store<ParentState, ParentAction>
+    let embedAction: (ExtractedAction) -> ParentAction
+    
+    func reduce(_ state: inout DerivedState, _ action: ExtractedAction) -> AnyPublisher<ExtractedAction, Error> {
+        parentStore.send(embedAction(action))
+        return .none
     }
 }

@@ -4,6 +4,8 @@ import SwiftUI
 
 
 public struct RouterFeature<Route: Equatable & Hashable & Identifiable >: Reducer, Codable {
+    public init() {}
+    
     public enum Action {
         case updateRoutes([Route])
         case updateSheet(Route?)
@@ -40,12 +42,8 @@ public struct RouterFeature<Route: Equatable & Hashable & Identifiable >: Reduce
         }
         
     }
-    
-    public struct Dependency {
-        public init(){}
-    }
-    
-    public static func reduce(_ state: inout State, _ action: Action, _ env: Dependency) -> AnyPublisher<Action, Error> {
+
+    public func reduce(_ state: inout State, _ action: Action) -> AnyPublisher<Action, Error> {
 
         switch(action) {
         case let .updateRoutes(routes):
