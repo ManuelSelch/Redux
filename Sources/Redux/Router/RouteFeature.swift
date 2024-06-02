@@ -3,15 +3,15 @@ import Combine
 import SwiftUI
 
 
-public struct RouterFeature<Route: Equatable & Hashable & Identifiable >: Reducer, Codable {
+public struct RouterFeature<Route: Equatable & Hashable & Identifiable & Codable>: Reducer, Codable {
     public init() {}
     
-    public enum Action {
+    public enum Action: Codable {
         case updateRoutes([Route])
         case updateSheet(Route?)
     }
     
-    public struct State: Equatable {
+    public struct State: Equatable, Codable {
         var root: Route
         var routes: [Route] = []
         var sheet: Route?
@@ -37,8 +37,23 @@ public struct RouterFeature<Route: Equatable & Hashable & Identifiable >: Reduce
             }
         }
         
+        public mutating func goBackToRoot() {
+            sheet = nil
+            routes = []
+        }
+        
         public mutating func push(_ route: Route) {
             routes.append(route)
+        }
+        
+        public var currentRoute: Route {
+            if let sheet = sheet {
+                return sheet
+            } else if let push = routes.last {
+                return push
+            } else {
+                return root
+            }
         }
         
     }

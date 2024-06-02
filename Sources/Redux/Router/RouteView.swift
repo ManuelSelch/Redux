@@ -1,7 +1,7 @@
 import SwiftUI
 
 public struct RouterView<
-    Route: Equatable & Hashable & Identifiable,
+    Route: Equatable & Hashable & Identifiable & Codable,
     Content: View
 >: View {
     @ObservedObject var store: StoreOf<RouterFeature<Route>>

@@ -18,7 +18,8 @@ public extension AnyPublisher {
     }
     
     static func merge(_ publishers: [AnyPublisher<Output, Failure>]) -> AnyPublisher<Output, Failure> {
-        return AnyPublisher.merge(publishers)
+        return Publishers.MergeMany(publishers)
+            .eraseToAnyPublisher()
     }
     
     static var none: AnyPublisher<Output, Failure> {

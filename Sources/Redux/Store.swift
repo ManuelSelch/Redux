@@ -3,6 +3,8 @@ import Combine
 import SwiftUI
 
 public typealias StoreOf<R: Reducer> = Store<R.State, R.Action>
+public typealias Middleware<State, Action> = (State, Action) -> AnyPublisher<Action, Never>?
+
 
 public class Store<State, Action>: ObservableObject {
     @Published public private(set) var state: State
@@ -10,16 +12,19 @@ public class Store<State, Action>: ObservableObject {
     private var cancellables: Set<AnyCancellable> = []
     
     private let reducer: any Reducer<State, Action>
+    private let middlewares:  [Middleware<State, Action>]
     
     var errorAction: ((Error) -> Action)?
 
     public init(
         initialState: State, 
         reducer: any Reducer<State, Action>,
+        middlewares: [Middleware<State, Action>] = [],
         errorAction: ((Error) -> Action)? = nil
     ) {
         self.state = initialState
         self.reducer = reducer
+        self.middlewares = middlewares
         self.errorAction = errorAction
     }
 
@@ -39,6 +44,18 @@ public class Store<State, Action>: ObservableObject {
                 }
             }, receiveValue: send)
             .store(in: &cancellables)
+        
+        
+        middlewares.forEach { middleware in
+            guard let publisher = middleware(state, action) else {
+                return
+            }
+            
+            publisher
+                .receive(on: DispatchQueue.main)
+                .sink(receiveValue: send)
+                .store(in: &cancellables)
+        }
     }
     
     
