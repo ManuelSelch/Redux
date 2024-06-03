@@ -13,10 +13,7 @@ let package = Package(
             name: "Redux",
             targets: ["Redux"]
         ),
-        .library(
-            name: "ReduxTests",
-            targets: ["ReduxTests"]
-        )
+        .library(name: "ReduxTestStore", targets: ["ReduxTestStore"])
     ],
     dependencies: [
         .package(url: "https://github.com/Moya/Moya.git", .upToNextMajor(from: "15.0.0"))
@@ -26,11 +23,10 @@ let package = Package(
             name: "Redux",
             dependencies: [
                 .product(name: "Moya", package: "Moya")
-            ],
-            path: "Sources"
+            ]
         ),
-        .testTarget(
-            name: "ReduxTests",
+        .target(
+            name: "ReduxTestStore",
             dependencies: ["Redux"]
         )
     ]
