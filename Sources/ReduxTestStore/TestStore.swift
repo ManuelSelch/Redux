@@ -1,3 +1,4 @@
+/*
 import Foundation
 import XCTest
 import Redux
@@ -308,3 +309,4 @@ func diff(_ first: String, _ second: String) -> String? {
     string.removeLast()
     return string
 }
+*/
