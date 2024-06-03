@@ -11,7 +11,7 @@ public protocol DependencyKey {
 }
 
 public extension DependencyKey {
-    public static var mockValue: Value { Self.liveValue }
+    static var mockValue: Value { Self.liveValue }
 }
 
 /// Provides access to injected dependencies.

@@ -2,7 +2,7 @@ import Foundation
 import Combine
 
 public protocol Reducer<State, Action> {
-    associatedtype State
+    associatedtype State: Equatable
     associatedtype Action
     
     func reduce(_ state: inout State, _ action: Action) -> AnyPublisher<Action, Error>

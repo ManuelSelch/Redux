@@ -6,7 +6,7 @@ public typealias StoreOf<R: Reducer> = Store<R.State, R.Action>
 public typealias Middleware<State, Action> = (State, Action) -> AnyPublisher<Action, Never>?
 
 
-public class Store<State, Action>: ObservableObject {
+public class Store<State: Equatable, Action>: ObservableObject {
     @Published public private(set) var state: State
     
     private var cancellables: Set<AnyCancellable> = []
@@ -90,7 +90,7 @@ public class Store<State, Action>: ObservableObject {
     }
 }
 
-struct LiftedReducer<ParentState, ParentAction, DerivedState, ExtractedAction>: Reducer {
+struct LiftedReducer<ParentState: Equatable, ParentAction, DerivedState: Equatable, ExtractedAction>: Reducer {
     let parentStore: Store<ParentState, ParentAction>
     let embedAction: (ExtractedAction) -> ParentAction
     
