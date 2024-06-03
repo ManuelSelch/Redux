@@ -1,5 +1,6 @@
 import Foundation
 import XCTest
+import Redux
 
 public typealias TestStoreOf<R: Reducer> = TestStore<R.State, R.Action>
 
