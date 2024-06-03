@@ -6,7 +6,7 @@ import PackageDescription
 let package = Package(
     name: "Redux",
     platforms: [
-        .iOS(.v16)
+        .iOS(.v16), .macOS(.v12), .macCatalyst(.v16)
     ],
     products: [
         .library(
