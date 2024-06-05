@@ -1,7 +1,7 @@
-/*
 import Foundation
 import XCTest
 import Redux
+import Dependencies
 
 public typealias TestStoreOf<R: Reducer> = TestStore<R.State, R.Action>
 
@@ -309,4 +309,4 @@ func diff(_ first: String, _ second: String) -> String? {
     string.removeLast()
     return string
 }
-*/
+
