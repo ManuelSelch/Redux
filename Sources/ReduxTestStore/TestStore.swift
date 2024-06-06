@@ -6,7 +6,7 @@ import Dependencies
 
 public typealias TestStoreOf<R: Reducer> = TestStore<R.State, R.Action>
 
-public class TestStore<State: Equatable, Action> {
+public class TestStore<State: Equatable, Action: Equatable> {
     var store: Store<State, Action>
     
     public init(
@@ -20,10 +20,11 @@ public class TestStore<State: Equatable, Action> {
     }
     
     public func send(_ action: Action, _ expected: @escaping (inout State) -> ()) {
-        if(!store.cancellables.isEmpty) {
+        if(!store.effects.isEmpty) {
             XCTFail(
               """
-              Unhandled actions. You must handle received actions before sending next action
+              Unhandled actions. You must handle received actions before sending next action:
+              \(store.effects)
               """
             )
         }
@@ -50,6 +51,26 @@ public class TestStore<State: Equatable, Action> {
                 """
               State change does not match expectation: …
               \(diff)
+              """
+            )
+        }
+    }
+    
+    public func receive(_ action: Action) {
+        if(store.effects.first == action) {
+            store.effects.removeFirst()
+        } else if(store.effects.contains(action)) {
+            XCTFail(
+                """
+              Unhandled actions before this action:
+              \(store.effects)
+              """
+            )
+        } else {
+            XCTFail(
+                """
+              action not found
+              \(store.effects)
               """
             )
         }

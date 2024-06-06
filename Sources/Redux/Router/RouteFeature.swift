@@ -6,7 +6,7 @@ import SwiftUI
 public struct RouterFeature<Route: Equatable & Hashable & Identifiable & Codable>: Reducer, Codable {
     public init() {}
     
-    public enum Action: Codable {
+    public enum Action: Codable, Equatable {
         case updateRoutes([Route])
         case updateSheet(Route?)
     }

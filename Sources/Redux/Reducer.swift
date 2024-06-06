@@ -3,7 +3,7 @@ import Combine
 
 public protocol Reducer<State, Action> {
     associatedtype State: Equatable
-    associatedtype Action
+    associatedtype Action: Equatable
     
     func reduce(_ state: inout State, _ action: Action) -> AnyPublisher<Action, Error>
 }

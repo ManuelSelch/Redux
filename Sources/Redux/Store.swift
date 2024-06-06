@@ -6,10 +6,11 @@ public typealias StoreOf<R: Reducer> = Store<R.State, R.Action>
 public typealias Middleware<State, Action> = (State, Action) -> AnyPublisher<Action, Never>?
 
 
-public class Store<State: Equatable, Action>: ObservableObject {
+public class Store<State: Equatable, Action: Equatable>: ObservableObject {
     @Published public private(set) var state: State
     
     var cancellables: Set<AnyCancellable> = []
+    var effects: [Action] = []
     
     private let reducer: any Reducer<State, Action>
     private let middlewares:  [Middleware<State, Action>]
@@ -42,7 +43,10 @@ public class Store<State: Equatable, Action>: ObservableObject {
                             self.send(errorAction(e))
                         }
                 }
-            }, receiveValue: send)
+            }, receiveValue: {
+                self.effects.append($0)
+                self.send($0)
+            })
             .store(in: &cancellables)
         
         
@@ -59,7 +63,7 @@ public class Store<State: Equatable, Action>: ObservableObject {
     }
     
     
-    public func lift<DerivedState: Equatable, ExtractedAction>(
+    public func lift<DerivedState: Equatable, ExtractedAction: Equatable>(
         _ deriveState: @escaping (State) -> DerivedState,
         _ embedAction: @escaping (ExtractedAction) -> Action
     ) -> Store<DerivedState, ExtractedAction> {
@@ -90,7 +94,7 @@ public class Store<State: Equatable, Action>: ObservableObject {
     }
 }
 
-struct LiftedReducer<ParentState: Equatable, ParentAction, DerivedState: Equatable, ExtractedAction>: Reducer {
+struct LiftedReducer<ParentState: Equatable, ParentAction: Equatable, DerivedState: Equatable, ExtractedAction: Equatable>: Reducer {
     let parentStore: Store<ParentState, ParentAction>
     let embedAction: (ExtractedAction) -> ParentAction
     
