@@ -1,7 +1,8 @@
 import Foundation
 import XCTest
-import Redux
 import Dependencies
+
+@testable import Redux
 
 public typealias TestStoreOf<R: Reducer> = TestStore<R.State, R.Action>
 
@@ -19,6 +20,14 @@ public class TestStore<State: Equatable, Action> {
     }
     
     public func send(_ action: Action, _ expected: @escaping (inout State) -> ()) {
+        if(!store.cancellables.isEmpty) {
+            XCTFail(
+              """
+              Unhandled actions. You must handle received actions before sending next action
+              """
+            )
+        }
+        
         var oldState = store.state
         
         self.store.send(action)

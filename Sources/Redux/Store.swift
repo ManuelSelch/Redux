@@ -9,7 +9,7 @@ public typealias Middleware<State, Action> = (State, Action) -> AnyPublisher<Act
 public class Store<State: Equatable, Action>: ObservableObject {
     @Published public private(set) var state: State
     
-    private var cancellables: Set<AnyCancellable> = []
+    var cancellables: Set<AnyCancellable> = []
     
     private let reducer: any Reducer<State, Action>
     private let middlewares:  [Middleware<State, Action>]
