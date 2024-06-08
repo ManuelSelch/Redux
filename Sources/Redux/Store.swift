@@ -2,15 +2,15 @@ import Foundation
 import Combine
 import SwiftUI
 
+public typealias Effect<Action> = AnyPublisher<Action, Error>
 public typealias StoreOf<R: Reducer> = Store<R.State, R.Action>
-public typealias Middleware<State, Action> = (State, Action) -> AnyPublisher<Action, Never>?
+public typealias Middleware<State, Action> = (State, Action) -> AnyPublisher<Action, Never>
 
 
 public class Store<State: Equatable, Action: Equatable>: ObservableObject {
     @Published public private(set) var state: State
     
     var cancellables: Set<AnyCancellable> = []
-    var effects: [Action] = []
     
     private let reducer: any Reducer<State, Action>
     private let middlewares:  [Middleware<State, Action>]
@@ -43,19 +43,14 @@ public class Store<State: Equatable, Action: Equatable>: ObservableObject {
                             self.send(errorAction(e))
                         }
                 }
-            }, receiveValue: {
-                self.effects.append($0)
-                self.send($0)
+            }, receiveValue: { action in
+                self.send(action)
             })
             .store(in: &cancellables)
         
         
         middlewares.forEach { middleware in
-            guard let publisher = middleware(state, action) else {
-                return
-            }
-            
-            publisher
+            middleware(state, action)
                 .receive(on: DispatchQueue.main)
                 .sink(receiveValue: send)
                 .store(in: &cancellables)
@@ -98,7 +93,7 @@ struct LiftedReducer<ParentState: Equatable, ParentAction: Equatable, DerivedSta
     let parentStore: Store<ParentState, ParentAction>
     let embedAction: (ExtractedAction) -> ParentAction
     
-    func reduce(_ state: inout DerivedState, _ action: ExtractedAction) -> AnyPublisher<ExtractedAction, Error> {
+    func reduce(_ state: inout DerivedState, _ action: ExtractedAction) -> Effect<ExtractedAction> {
         parentStore.send(embedAction(action))
         return .none
     }

@@ -6,75 +6,191 @@ import Dependencies
 
 public typealias TestStoreOf<R: Reducer> = TestStore<R.State, R.Action>
 
-public class TestStore<State: Equatable, Action: Equatable> {
-    var store: Store<State, Action>
+public class TestStore<State: Equatable, Action: Equatable>: Store<State, Action> {
+    private var recordedActions: [Action] = []
     
-    public init(
+    public override init(
         initialState: State,
         reducer: any Reducer<State, Action>,
         middlewares: [Middleware<State, Action>] = [],
         errorAction: ((Error) -> Action)? = nil
     ) {
         DependencyValues.mode = .mock
-        self.store = .init(initialState: initialState, reducer: reducer, middlewares: middlewares, errorAction: errorAction)
+        
+        super.init(initialState: initialState, reducer: reducer, middlewares: middlewares, errorAction: errorAction)
     }
     
-    public func send(_ action: Action, _ expected: @escaping (inout State) -> ()) {
-        if(!store.effects.isEmpty) {
+    public override func send(_ action: Action) {
+        super.send(action)
+        self.recordedActions.append(action)
+    }
+    
+    public func send(
+        _ action: Action, _ expected: @escaping (inout State) -> (),
+        file: StaticString = #file, line: UInt = #line
+    ) {
+        DispatchQueue.main.async {
+            self._send(action, expected)
+        }
+        
+    }
+    
+    func _send(
+        _ action: Action, _ expected: @escaping (inout State) -> (),
+        file: StaticString = #file, line: UInt = #line
+    ) {
+        if(!self.recordedActions.isEmpty) {
             XCTFail(
-              """
-              Unhandled actions. You must handle received actions before sending next action:
-              \(store.effects)
-              """
+          """
+          Unhandled actions. You must handle received actions before sending next action:
+          \(self.recordedActions)
+          """,
+          file: file,
+          line: line
             )
         }
         
-        var oldState = store.state
-        
-        self.store.send(action)
-        let newState = store.state
+        var oldState = self.state
+        self.send(action)
+        self.recordedActions.removeFirst()
+        let newState = self.state
         
         expected(&oldState)
         
         if oldState != newState {
             let diff =
-                debugDiff(oldState, newState)
+            debugDiff(oldState, newState)
                 .map { "\($0.indent(by: 4))\n\n(Expected: −, Actual: +)" }
-                ?? """
-              Expected:
-              \(String(describing: oldState).indent(by: 2))
-              Actual:
-              \(String(describing: newState).indent(by: 2))
-              """
-
+            ?? """
+          Expected:
+          \(String(describing: oldState).indent(by: 2))
+          Actual:
+          \(String(describing: newState).indent(by: 2))
+          """
+            
+            XCTFail(
+          """
+          State change does not match expectation: …
+          \(diff)
+          """,
+          file: file,
+          line: line
+            )
+        }
+        
+        
+    }
+    
+    public func finish(
+        file: StaticString = #file, line: UInt = #line
+    ) async {
+        let success = await waitUntil {
+            self.recordedActions.count > 0
+        }
+        
+        if(success) {
             XCTFail(
                 """
-              State change does not match expectation: …
-              \(diff)
-              """
+                unhandled actions before finishing test:
+                \(recordedActions)
+                """,
+                file: file,
+                line: line
             )
         }
     }
     
-    public func receive(_ action: Action) {
-        if(store.effects.first == action) {
-            store.effects.removeFirst()
-        } else if(store.effects.contains(action)) {
-            XCTFail(
-                """
-              Unhandled actions before this action:
-              \(store.effects)
-              """
-            )
+    public func receive(
+        _ action: Action, _ expected: @escaping (inout State) -> (),
+        file: StaticString = #file, line: UInt = #line
+    ) async {
+        return await receive([action], expected, file: file, line: line)
+    }
+    
+    public func receive(
+        _ actions: [Action], _ expected: @escaping (inout State) -> (),
+        file: StaticString = #file, line: UInt = #line
+    ) async {
+        var oldState = self.state
+        
+        let success = await waitUntil {
+            self.recordedActions.contains(actions)
+        }
+        
+        if success {
+            if(recordedActions.count != actions.count) {
+                XCTFail(
+                    """
+                    unhandled actions before this action:
+                    \(recordedActions)
+                    """,
+                    file: file,
+                    line: line
+                )
+            }
+            recordedActions.removeAll()
+            
+            let newState = self.state
+            expected(&oldState)
+            
+            
+            if oldState != newState {
+                let diff =
+                    debugDiff(oldState, newState)
+                    .map { "\($0.indent(by: 4))\n\n(Expected: −, Actual: +)" }
+                    ?? """
+                  Expected:
+                  \(String(describing: oldState).indent(by: 2))
+                  Actual:
+                  \(String(describing: newState).indent(by: 2))
+                  """
+
+                XCTFail(
+                  """
+                  State change does not match expectation: …
+                  \(diff)
+                  """,
+                  file: file,
+                  line: line
+                )
+            }
+            
+            
         } else {
             XCTFail(
                 """
-              action not found
-              \(store.effects)
-              """
+                timeout waiting for action
+                \(recordedActions)
+                """,
+                file: file,
+                line: line
             )
         }
     }
+    
+    enum WaitUntilError: Error {
+        case timeout
+    }
+
+    func waitUntil(condition: @escaping () -> Bool, timeout: TimeInterval = 1.0) async -> Bool {
+        let startTime = Date()
+
+        while !condition() {
+            let elapsed = Date().timeIntervalSince(startTime)
+            if elapsed >= timeout {
+                return false
+            }
+            try? await Task.sleep(nanoseconds: 500_000_00)
+        }
+        
+        return true
+    }
+}
+
+
+// MARK: - helper methods
+extension String: LocalizedError {
+    public var errorDescription: String? { return self }
 }
 
 

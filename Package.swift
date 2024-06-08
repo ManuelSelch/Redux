@@ -32,6 +32,10 @@ let package = Package(
                 "Redux",
                 .product(name: "Dependencies", package: "Dependencies")
             ]
+        ),
+        .testTarget(
+            name: "ReduxTests",
+            dependencies: ["Redux", "ReduxTestStore"]
         )
     ]
 )
