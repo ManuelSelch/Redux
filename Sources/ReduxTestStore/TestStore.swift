@@ -30,7 +30,10 @@ public class TestStore<State: Equatable, Action: Equatable>: Store<State, Action
         file: StaticString = #file, line: UInt = #line
     ) {
         DispatchQueue.main.async {
-            self._send(action, expected)
+            self._send(
+                action, expected,
+                file: file, line: line
+            )
         }
         
     }
