@@ -5,9 +5,16 @@ public protocol Reducer<State, Action> {
     associatedtype State: Equatable
     associatedtype Action: Equatable
     
-    func reduce(_ state: inout State, _ action: Action) -> AnyPublisher<Action, Error>
+    func reduce(_ state: inout State, _ action: Action) -> Effect<Action>
 }
 
+public extension Reducer {
+    func lift<Parent>(_ state: inout State, _ action: Action, toParent: @escaping (Action) -> Parent) -> Effect<Parent> {
+        return reduce(&state, action)
+            .map(toParent)
+            .eraseToAnyPublisher()
+    }
+}
 
 
 public extension AnyPublisher {
