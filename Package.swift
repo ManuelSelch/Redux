@@ -15,7 +15,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/ManuelSelch/Dependencies.git", .upToNextMajor(from: "1.0.0")),
         .package(url: "https://github.com/Flight-School/AnyCodable.git", .upToNextMajor(from: "0.6.7")),
-        .package(url: "https://github.com/kean/Pulse.git", .upToNextMajor(from: "0.6.7")),
+        .package(url: "https://github.com/kean/Pulse.git", .upToNextMajor(from: "4.2.7")),
         .package(url: "https://github.com/daltoniam/Starscream.git", from: "4.0.6")
     ],
     targets: [
