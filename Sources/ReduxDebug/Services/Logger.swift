@@ -1,15 +1,27 @@
 import Pulse
 
-class Logger {
-    static func log(_ msg: String) {
+public class Logger {
+    public static func debug(_ msg: String){
+        Self.log(msg, .debug)
+    }
+    
+    public static func waring(_ msg: String){
+        Self.log(msg, .warning)
+    }
+    
+    public static func error(_ msg: String){
+        Self.log(msg, .error)
+    }
+    
+    private static func log(_ msg: String, _ level: LoggerStore.Level) {
         LoggerStore.shared.storeMessage(
             label: "log",
-            level: .debug,
+            level: level,
             message: msg
         )
     }
     
-    static func formatAction<Action>(_ action: Action) -> String {
+    public static func formatAction<Action>(_ action: Action) -> String {
         let actionStr = "\(action)"
         print(actionStr)
         let methods = actionStr.split(separator: "(")

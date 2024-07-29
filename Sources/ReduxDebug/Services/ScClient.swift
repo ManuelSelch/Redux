@@ -19,6 +19,19 @@ public class ScClient: Listener {
     public func connect() {
         reset()
         
+        socket.onEvent = { event in
+            switch(event){
+            case .connected(_): 
+                Logger.debug("connected")
+                if let onConnect = self.onConnect {
+                    onConnect()
+                }
+            default: break
+            }
+        }
+        
+    
+        /*
         socket.onConnect = {
             Logger.log("connected")
             if let onConnect = self.onConnect {
@@ -30,16 +43,17 @@ public class ScClient: Listener {
         }
         
         socket.onText = self.onMessage
+         */
         
         socket.connect()
     }
     
     func onMessage(_ text: String) {
         if(text == "") {
-            Logger.log("receiving ping, sending pong back")
+            Logger.debug("receiving ping, sending pong back")
             self.socket.write(string: "")
         } else {
-            Logger.log("receive: \(text)")
+            Logger.debug("receive: \(text)")
             
             if let messageObject = JSONConverter.deserializeString(message: text) {
                 if let (data, rid, cid, eventName, error) = Parser.getMessageDetails(myMessage: messageObject) {
@@ -99,10 +113,10 @@ public class ScClient: Listener {
         if let data = try? JSONEncoder().encode(msg),
            let json = String(data: data, encoding: String.Encoding.utf8)
         {
-            Logger.log("send: \(json)")
+            Logger.debug("send: \(json)")
             socket.write(string: json)
         } else {
-            Logger.log("error encoding message")
+            Logger.error("error encoding message: \(msg)")
         }
         
     }
