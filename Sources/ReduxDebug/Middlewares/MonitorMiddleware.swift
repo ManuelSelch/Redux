@@ -129,7 +129,7 @@ public class MonitorMiddleware<Action: Codable, State: Codable> {
         subject.send(action)
     }
     
-    private func handle(_ state: State, _ action: Action) -> AnyPublisher<Action, Never> {
+    public func handle(_ state: State, _ action: Action) -> AnyPublisher<Action, Never> {
         lastState = state
         
         if(!isRemoteSetup) {
