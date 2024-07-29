@@ -26,24 +26,14 @@ public class ScClient: Listener {
                 if let onConnect = self.onConnect {
                     onConnect()
                 }
+            case let .disconnected(error, _):
+                Logger.waring("disconnect with message \(error)")
+            case let .text(text):
+                self.onMessage(text)
+                
             default: break
             }
         }
-        
-    
-        /*
-        socket.onConnect = {
-            Logger.log("connected")
-            if let onConnect = self.onConnect {
-                onConnect()
-            }
-        }
-        socket.onDisconnect = { error in
-            Logger.log("disconnect with error \(error.debugDescription)")
-        }
-        
-        socket.onText = self.onMessage
-         */
         
         socket.connect()
     }
