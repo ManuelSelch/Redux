@@ -56,6 +56,16 @@ public struct RouterFeature<Route: Equatable & Hashable & Identifiable & Codable
             }
         }
         
+        public mutating func setCurrentRoute(_ route: Route) {
+            if sheet != nil {
+                sheet = route
+            } else if routes.last != nil {
+                routes[routes.count] = route
+            } else {
+                root = route
+            }
+        }
+        
     }
 
     public func reduce(_ state: inout State, _ action: Action) -> AnyPublisher<Action, Error> {
