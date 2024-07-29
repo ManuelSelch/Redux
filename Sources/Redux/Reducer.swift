@@ -14,6 +14,16 @@ public extension Reducer {
             .map(toParent)
             .eraseToAnyPublisher()
     }
+    
+    func lift<Parent>(_ optionalState: inout State?, _ action: Action, toParent: @escaping (Action) -> Parent) -> Effect<Parent> {
+        if var state = optionalState {
+            let effect = lift(&state, action, toParent: toParent)
+            optionalState = state
+            return effect
+        } else {
+            return .none
+        }
+    }
 }
 
 

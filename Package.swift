@@ -1,5 +1,4 @@
 // swift-tools-version: 5.9
-// The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
 
@@ -9,19 +8,28 @@ let package = Package(
         .iOS(.v16), .macOS(.v13), .macCatalyst(.v16)
     ],
     products: [
-        .library(
-            name: "Redux",
-            targets: ["Redux"]
-        ),
+        .library(name: "Redux", targets: ["Redux"]),
+        .library(name: "ReduxDebug", targets: ["ReduxDebug"]),
         .library(name: "ReduxTestStore", targets: ["ReduxTestStore"])
     ],
     dependencies: [
-        .package(url: "https://github.com/ManuelSelch/Dependencies.git", .upToNextMajor(from: "1.0.0"))
+        .package(url: "https://github.com/ManuelSelch/Dependencies.git", .upToNextMajor(from: "1.0.0")),
+        .package(url: "https://github.com/Flight-School/AnyCodable.git", .upToNextMajor(from: "0.6.7")),
+        .package(url: "https://github.com/kean/Pulse.git", .upToNextMajor(from: "0.6.7")),
+        .package(url: "https://github.com/daltoniam/Starscream.git", from: "4.0.6")
     ],
     targets: [
         .target(
             name: "Redux",
+            dependencies: []
+        ),
+        .target(
+            name: "ReduxDebug",
             dependencies: [
+                "Redux",
+                .product(name: "AnyCodable", package: "AnyCodable"),
+                .product(name: "Pulse", package: "Pulse"),
+                .product(name: "Starscream", package: "Starscream")
             ]
         ),
         .target(

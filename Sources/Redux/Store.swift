@@ -6,7 +6,6 @@ public typealias Effect<Action> = AnyPublisher<Action, Error>
 public typealias StoreOf<R: Reducer> = Store<R.State, R.Action>
 public typealias Middleware<State, Action> = (State, Action) -> AnyPublisher<Action, Never>
 
-
 public class Store<State: Equatable, Action: Equatable>: ObservableObject {
     @Published public private(set) var state: State
     
