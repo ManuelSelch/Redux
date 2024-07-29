@@ -42,14 +42,14 @@ public class MonitorMiddleware<Action: Codable, State: Codable> {
     }
    
     private func onHandshake(_ eventName: String, _ error: AnyObject?, _ data: AnyObject?) {
-        Logger.log("on handshake")
+        Logger.debug("on handshake")
         client.emitAck(eventName: "login", data: "master", ack: onLogin)
     }
     
     private func onLogin(_ eventName: String, _ error: AnyObject?, _ data: AnyObject?) {
-        Logger.log("on login")
+        Logger.debug("on login")
         if let channel = data as? String {
-            Logger.log("channel: \(channel)")
+            Logger.debug("channel: \(channel)")
             client.subscribe(channelName: channel, ack: onMessage)
             sendInit()
             
@@ -61,7 +61,7 @@ public class MonitorMiddleware<Action: Codable, State: Codable> {
     }
     
     private func onMessage(_ eventName: String, _ data: AnyObject?) {
-        Logger.log("on respond channel message")
+        Logger.debug("on respond channel message")
         if let dataObj = data as? [String : Any],
            let type = dataObj["type"] as? String
         {
@@ -86,14 +86,14 @@ public class MonitorMiddleware<Action: Codable, State: Codable> {
                         guard
                             let stateDataString = dataObj["state"] as? String
                         else {
-                            Logger.log("no state string")
+                            Logger.debug("no state string")
                             break
                         }
                         
                         guard
                             let stateData = stateDataString.data(using: .utf8)
                         else {
-                            Logger.log("no state data")
+                            Logger.debug("no state data")
                             break
                         }
                         
@@ -101,18 +101,18 @@ public class MonitorMiddleware<Action: Codable, State: Codable> {
                             let newState = try JSONDecoder().decode(State.self, from: stateData)
                             handleAction(.jumpTo(newState))
                         } catch DecodingError.dataCorrupted(let context) {
-                            Logger.log(context.debugDescription)
+                            Logger.error(context.debugDescription)
                         } catch DecodingError.keyNotFound(let key, let context) {
-                            Logger.log("Key '\(key)' not found: \(context.debugDescription)")
-                            Logger.log("codingPath: \(context.codingPath)")
+                            Logger.error("Key '\(key)' not found: \(context.debugDescription)")
+                            Logger.error("codingPath: \(context.codingPath)")
                         } catch DecodingError.valueNotFound(let value, let context) {
-                            Logger.log("Value '\(value)' not found: \(context.debugDescription)")
-                            Logger.log("codingPath: \(context.codingPath)")
+                            Logger.error("Value '\(value)' not found: \(context.debugDescription)")
+                            Logger.error("codingPath: \(context.codingPath)")
                         } catch DecodingError.typeMismatch(let type, let context) {
-                            Logger.log("Type '\(type)' mismatch: \(context.debugDescription)")
-                            Logger.log("codingPath: \(context.codingPath)")
+                            Logger.error("Type '\(type)' mismatch: \(context.debugDescription)")
+                            Logger.error("codingPath: \(context.codingPath)")
                         } catch {
-                            Logger.log("error: \(error.localizedDescription)")
+                            Logger.error("error: \(error.localizedDescription)")
                         }
                     default:
                         break
