@@ -4,7 +4,7 @@ import AnyCodable
 
 import Redux
 
-public class MonitorMiddleware<Action: Codable, State: Codable> {
+public class MonitorMiddleware<Action: Codable, State: Codable & Equatable> {
     public enum ActionType {
         case reset
         case jumpTo(State)
@@ -78,10 +78,19 @@ public class MonitorMiddleware<Action: Codable, State: Codable> {
                     case "COMMIT":
                         sendInit()
                     case "ROLLBACK":
-                        if let state = commits.popLast() {
+                        if lastState == commits.last {
+                            // delete this commit
+                            if let state = commits.popLast() {
+                                handleAction(.jumpTo(state))
+                                sendInit()
+                            }
+                            // else: dont remove "root" commit
+                        } else if let state = commits.last {
+                            // jump to last commit
                             handleAction(.jumpTo(state))
                             sendInit()
                         }
+                       
                     case "JUMP_TO_ACTION":
                         guard
                             let stateDataString = dataObj["state"] as? String
