@@ -11,7 +11,7 @@ public struct RouterFeature<Route: Equatable & Hashable & Identifiable & Codable
         case updateSheet(Route?)
     }
     
-    public struct State: Equatable, Codable {
+    public struct State: Equatable, Codable, Hashable {
         var root: Route
         var routes: [Route] = []
         var sheet: Route?
