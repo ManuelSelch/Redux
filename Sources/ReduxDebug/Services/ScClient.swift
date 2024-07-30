@@ -28,6 +28,7 @@ public class ScClient: Listener {
                 }
             case let .disconnected(error, _):
                 Logger.waring("disconnect with message \(error)")
+                self.socket.connect() // reconnect
             case let .text(text):
                 self.onMessage(text)
                 

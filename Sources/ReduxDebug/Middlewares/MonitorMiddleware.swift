@@ -22,7 +22,7 @@ public class MonitorMiddleware<Action: Codable, State: Codable & Equatable> {
     private var showAction: (Action) -> (Bool)
     
     private var lastState: State
-    private var commits: [State] = []
+    private var lastCommit: State?
 
     public init(currentState: State, onAction: @escaping (ActionType) -> (Action), showAction: @escaping (Action) -> (Bool)) {
         self.lastState = currentState
@@ -57,7 +57,7 @@ public class MonitorMiddleware<Action: Codable, State: Codable & Equatable> {
     }
     
     private func reset() {
-        commits = []
+        lastCommit = nil
     }
     
     private func onMessage(_ eventName: String, _ data: AnyObject?) {
@@ -78,17 +78,9 @@ public class MonitorMiddleware<Action: Codable, State: Codable & Equatable> {
                     case "COMMIT":
                         sendInit()
                     case "ROLLBACK":
-                        if lastState == commits.last {
-                            // delete this commit
-                            if let state = commits.popLast() {
-                                handleAction(.jumpTo(state))
-                                sendInit()
-                            }
-                            // else: dont remove "root" commit
-                        } else if let state = commits.last {
-                            // jump to last commit
-                            handleAction(.jumpTo(state))
-                            sendInit()
+                        if let commit = lastCommit {
+                            handleAction(.jumpTo(commit))
+                            sendInit(commit: false)
                         }
                        
                     case "JUMP_TO_ACTION":
@@ -172,8 +164,10 @@ private extension MonitorMiddleware {
         client.emit(eventName: "log", data: data)
     }
     
-    func sendInit() {
-        commits.append(lastState)
+    func sendInit(commit: Bool = true) {
+        if(commit) {
+            lastCommit = lastState
+        }
         
         let data = [
             "type": "INIT",
