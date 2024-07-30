@@ -72,9 +72,9 @@ public class MonitorMiddleware<Action: Codable, State: Codable & Equatable> {
                 {
                     switch(actionType) {
                     case "RESET":
+                        handleAction(.reset)
                         reset()
                         sendInit()
-                        handleAction(.reset)
                     case "COMMIT":
                         sendInit()
                     case "ROLLBACK":
@@ -176,7 +176,8 @@ private extension MonitorMiddleware {
         commits.append(lastState)
         
         let data = [
-            "type": "INIT"
+            "type": "INIT",
+            "payload": lastState
         ] as AnyCodable
         
         client.emit(eventName: "log", data: data)
