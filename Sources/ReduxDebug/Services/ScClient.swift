@@ -6,6 +6,7 @@ public class ScClient: Listener {
     var currentId: Int = 0
     
     public var onConnect: (() -> ())?
+    public var isConnected: Bool = false
     
     public init(url: String) {
         var request = URLRequest(url: URL(string: url)!)
@@ -23,11 +24,13 @@ public class ScClient: Listener {
             switch(event){
             case .connected(_): 
                 Logger.debug("connected")
+                self.isConnected = true
                 if let onConnect = self.onConnect {
                     onConnect()
                 }
-            case let .disconnected(error, _):
-                Logger.waring("disconnect with message \(error)")
+            case let .disconnected(error, code):
+                Logger.waring("disconnect with message \(error) and code \(code)")
+                self.isConnected = false
                 self.socket.connect() // reconnect
             case let .text(text):
                 self.onMessage(text)
@@ -41,10 +44,10 @@ public class ScClient: Listener {
     
     func onMessage(_ text: String) {
         if(text == "") {
-            Logger.debug("receiving ping, sending pong back")
+            Logger.trace("receiving ping, sending pong back")
             self.socket.write(string: "")
         } else {
-            Logger.debug("receive: \(text)")
+            Logger.trace("receive: \(text)")
             
             if let messageObject = JSONConverter.deserializeString(message: text) {
                 if let (data, rid, cid, eventName, error) = Parser.getMessageDetails(myMessage: messageObject) {
@@ -104,7 +107,7 @@ public class ScClient: Listener {
         if let data = try? JSONEncoder().encode(msg),
            let json = String(data: data, encoding: String.Encoding.utf8)
         {
-            Logger.debug("send: \(json)")
+            Logger.trace("send: \(json)")
             socket.write(string: json)
         } else {
             Logger.error("error encoding message: \(msg)")

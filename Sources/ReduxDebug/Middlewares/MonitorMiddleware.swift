@@ -10,6 +10,8 @@ public class MonitorMiddleware<Action: Codable, State: Codable & Equatable> {
         case jumpTo(State)
     }
 
+    private var offlineActions: [Action] = []
+    private var offlineStates: [State] = []
     
     private var client: ScClient
     
@@ -17,7 +19,7 @@ public class MonitorMiddleware<Action: Codable, State: Codable & Equatable> {
     private var cancellables: Set<AnyCancellable> = []
     
     private var isRemoteSetup = false
-    
+     
     private var onAction: (ActionType) -> (Action)
     private var showAction: (Action) -> (Bool)
     
@@ -49,10 +51,9 @@ public class MonitorMiddleware<Action: Codable, State: Codable & Equatable> {
     private func onLogin(_ eventName: String, _ error: AnyObject?, _ data: AnyObject?) {
         Logger.debug("on login")
         if let channel = data as? String {
-            Logger.debug("channel: \(channel)")
             client.subscribe(channelName: channel, ack: onMessage)
             sendInit()
-            
+            sendOfflineActions()
         }
     }
     
@@ -148,7 +149,24 @@ public class MonitorMiddleware<Action: Codable, State: Codable & Equatable> {
 
 
 private extension MonitorMiddleware {
+    func sendOfflineActions() {
+        if(client.isConnected) {
+            while !offlineActions.isEmpty && !offlineStates.isEmpty {
+                let action = offlineActions.removeLast()
+                let state = offlineStates.removeLast()
+                
+                sendAction(action, state)
+            }
+        }
+    }
+    
     func sendAction(_ action: Action, _ state: State) {
+        if(!client.isConnected) {
+            offlineActions.append(action)
+            offlineStates.append(state)
+            return
+        }
+        
         let data = [
             "type": "ACTION",
             "action": [
@@ -158,7 +176,8 @@ private extension MonitorMiddleware {
                 ],
                 "timestamp": Date.now.timeIntervalSince1970
             ],
-            "payload": state
+            "payload": state,
+            "instanceId": "MyID"
         ] as AnyCodable
         
         client.emit(eventName: "log", data: data)
@@ -171,7 +190,8 @@ private extension MonitorMiddleware {
         
         let data = [
             "type": "INIT",
-            "payload": lastState
+            "payload": lastState,
+            "instanceId": "MyID"
         ] as AnyCodable
         
         client.emit(eventName: "log", data: data)

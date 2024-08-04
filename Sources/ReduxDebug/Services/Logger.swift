@@ -1,6 +1,10 @@
 import Pulse
 
 public class Logger {
+    public static func trace(_ msg: String){
+        Self.log(msg, .trace)
+    }
+    
     public static func debug(_ msg: String){
         Self.log(msg, .debug)
     }
