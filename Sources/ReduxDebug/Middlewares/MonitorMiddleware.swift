@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 import AnyCodable
+import UIKit
 
 import Redux
 
@@ -10,6 +11,8 @@ public class MonitorMiddleware<Action: Codable, State: Codable & Equatable> {
         case jumpTo(State)
     }
 
+    private var instanceId = UIDevice.current.identifierForVendor?.uuidString ?? "MyID"
+    
     private var offlineActions: [Action] = []
     private var offlineStates: [State] = []
     
@@ -25,17 +28,23 @@ public class MonitorMiddleware<Action: Codable, State: Codable & Equatable> {
     
     private var lastState: State
     private var lastCommit: State?
+    
+    private var isRemoteLog: () -> Bool
 
-    public init(currentState: State, onAction: @escaping (ActionType) -> (Action), showAction: @escaping (Action) -> (Bool)) {
+    public init(
+        currentState: State, 
+        onAction: @escaping (ActionType) -> (Action), showAction: @escaping (Action) -> (Bool),
+        isRemoteLog: @escaping () -> Bool
+    ) {
         self.lastState = currentState
         self.onAction = onAction
         self.showAction = showAction
+        self.isRemoteLog = isRemoteLog
         
         self.subject = PassthroughSubject<Action, Never>()
         
         self.client = .init(url: "wss://redux.dev.manuelselch.de/socketcluster/")
         self.client.onConnect = onConnect
-        client.connect()
     }
     
     private func onConnect() {
@@ -45,16 +54,19 @@ public class MonitorMiddleware<Action: Codable, State: Codable & Equatable> {
    
     private func onHandshake(_ eventName: String, _ error: AnyObject?, _ data: AnyObject?) {
         Logger.debug("on handshake")
+        if let dataObj = data as? [String : Any],
+           let id = dataObj["id"] as? String
+        {
+            client.subscribe(channelName: "sc-\(id)", ack: onMessage)
+        }
+            
         client.emitAck(eventName: "login", data: "master", ack: onLogin)
     }
     
     private func onLogin(_ eventName: String, _ error: AnyObject?, _ data: AnyObject?) {
         Logger.debug("on login")
-        if let channel = data as? String {
-            client.subscribe(channelName: channel, ack: onMessage)
-            sendInit()
-            sendOfflineActions()
-        }
+        sendInit()
+        sendOfflineActions()
     }
     
     private func reset() {
@@ -83,22 +95,17 @@ public class MonitorMiddleware<Action: Codable, State: Codable & Equatable> {
                             handleAction(.jumpTo(commit))
                             sendInit(commit: false)
                         }
-                       
+                        
                     case "JUMP_TO_ACTION":
                         guard
-                            let stateDataString = dataObj["state"] as? String
+                            let stateDataString = dataObj["state"] as? String,
+                            let stateData = stateDataString.data(using: .utf8)
                         else {
                             Logger.debug("no state string")
                             break
                         }
                         
-                        guard
-                            let stateData = stateDataString.data(using: .utf8)
-                        else {
-                            Logger.debug("no state data")
-                            break
-                        }
-                        
+                      
                         do {
                             let newState = try JSONDecoder().decode(State.self, from: stateData)
                             handleAction(.jumpTo(newState))
@@ -120,6 +127,35 @@ public class MonitorMiddleware<Action: Codable, State: Codable & Equatable> {
                         break
                     }
                 }
+            case "ACTION":
+                if let actionString = dataObj["action"] as? String {
+                    guard
+                        let actionData = actionString.data(using: .utf8)
+                    else {
+                        Logger.debug("no action data")
+                        break
+                    }
+                    
+                    
+                    do {
+                        let newAction = try JSONDecoder().decode(Action.self, from: actionData)
+                        Logger.debug("dispatch action: \(newAction)")
+                        subject.send(newAction)
+                    } catch DecodingError.dataCorrupted(let context) {
+                        Logger.error(context.debugDescription)
+                    } catch DecodingError.keyNotFound(let key, let context) {
+                        Logger.error("Key '\(key)' not found: \(context.debugDescription)")
+                        Logger.error("codingPath: \(context.codingPath)")
+                    } catch DecodingError.valueNotFound(let value, let context) {
+                        Logger.error("Value '\(value)' not found: \(context.debugDescription)")
+                        Logger.error("codingPath: \(context.codingPath)")
+                    } catch DecodingError.typeMismatch(let type, let context) {
+                        Logger.error("Type '\(type)' mismatch: \(context.debugDescription)")
+                        Logger.error("codingPath: \(context.codingPath)")
+                    } catch {
+                        Logger.error("error: \(error.localizedDescription)")
+                    }
+                }
             default:
                 break
             }
@@ -134,8 +170,13 @@ public class MonitorMiddleware<Action: Codable, State: Codable & Equatable> {
     public func handle(_ state: State, _ action: Action) -> AnyPublisher<Action, Never> {
         lastState = state
         
+        if(!isRemoteLog()) {
+            return .none
+        }
+            
         if(!isRemoteSetup) {
             isRemoteSetup = true
+            client.connect()
             return subject.eraseToAnyPublisher()
         }
         
@@ -177,10 +218,10 @@ private extension MonitorMiddleware {
                 "timestamp": Date.now.timeIntervalSince1970
             ],
             "payload": state,
-            "instanceId": "MyID"
+            "instanceId": instanceId
         ] as AnyCodable
         
-        client.emit(eventName: "log", data: data)
+        client.emit(eventName: "log-noid", data: data)
     }
     
     func sendInit(commit: Bool = true) {
@@ -191,9 +232,9 @@ private extension MonitorMiddleware {
         let data = [
             "type": "INIT",
             "payload": lastState,
-            "instanceId": "MyID"
+            "instanceId": instanceId,
         ] as AnyCodable
         
-        client.emit(eventName: "log", data: data)
+        client.emit(eventName: "log-noid", data: data)
     }
 }

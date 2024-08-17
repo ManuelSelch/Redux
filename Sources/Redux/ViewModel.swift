@@ -1,11 +1,11 @@
+public typealias ViewStoreOf<V: ViewModel> = Store<V.State, V.Action>
+
 public protocol ViewModel<State, Action, DState, DAction> {
     associatedtype State: ViewState<DState>
     associatedtype Action: ViewAction<DAction>
     
     associatedtype DState: Equatable
     associatedtype DAction: Equatable
-    
-    typealias ViewStore = Store<State, Action>
 }
 
 public protocol ViewState<DState>: Equatable {

@@ -8,7 +8,7 @@ public struct StackRouter<Route: Equatable & Hashable & Identifiable & Codable>:
     }
     
     public var currentRoute: Route {
-        return stack.first ?? root
+        return stack.last ?? root
     }
     
     
@@ -27,6 +27,10 @@ public struct StackRouter<Route: Equatable & Hashable & Identifiable & Codable>:
     
     public mutating func dismiss() {
         stack.popLast()
+    }
+    
+    public mutating func goBackToRoot() {
+        stack = []
     }
 }
 

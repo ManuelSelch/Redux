@@ -12,6 +12,7 @@ public struct AppRouterFeature<
         
         var screen: Screen
         var sheet: StackRouter<Route>?
+        var popup: Route?
         var routers: [Screen:StackRouter<Route>]
         
         /// current tab or root router
@@ -31,6 +32,11 @@ public struct AppRouterFeature<
         /// present sheet router
         public mutating func presentSheet(_ route: Route) {
             sheet = .init(root: route)
+        }
+        
+        /// present popup router
+        public mutating func presentPopup(_ route: Route) {
+            popup = route
         }
         
         /// set root of current router
@@ -53,10 +59,22 @@ public struct AppRouterFeature<
         
         /// hides sheet or pops stack route of current router
         public mutating func dismiss() {
-            if sheet != nil {
+            if popup != nil {
+                popup = nil
+            }
+            else if sheet != nil {
                 sheet = nil
             } else {
                 routers[screen]?.dismiss()
+            }
+        }
+        
+        /// hides sheet or pops stack route of current router
+        public mutating func goBackToRoot() {
+            if sheet != nil {
+                sheet?.goBackToRoot()
+            } else {
+                routers[screen]?.goBackToRoot()
             }
         }
     }
@@ -70,6 +88,7 @@ public struct AppRouterFeature<
         case updateScreen(Screen)
         case updateRoutes([Route])
         case updateSheet(Route?)
+        case updatePopup(Route?)
     }
     
     public func reduce(_ state: inout State, _ action: Action) -> Effect<Action> {
@@ -78,7 +97,7 @@ public struct AppRouterFeature<
         case let .updateScreen(screen):
             state.screen = screen
         case let .updateRoutes(routes):
-            if state.sheet != nil {
+           if state.sheet != nil {
                 state.sheet?.updateRoutes(routes)
             } else {
                 state.routers[state.screen]?.updateRoutes(routes)
@@ -88,6 +107,13 @@ public struct AppRouterFeature<
                 state.sheet = .init(root: route)
             } else {
                 state.sheet = nil
+            }
+            
+        case let .updatePopup(route):
+            if let route = route {
+                state.popup = route
+            } else {
+                state.popup = nil
             }
         }
         
