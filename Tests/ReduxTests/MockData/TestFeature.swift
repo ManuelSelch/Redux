@@ -5,9 +5,13 @@ struct TestFeature: Reducer {
     struct State: Equatable {
         var count = 1
         
-        var subFeature: SubFeature.State = .init()
+        var subFeature: SubFeature.State = .init(sub: .init())
         
-        var router: RouterFeature<Route>.State = .init(root: .home)
+        var router: AppRouterFeature<Route, TabRoute>.State = .init(screen: .root, routers: [
+            .root: .init(root: .home),
+            .tab(.tab1): .init(root: .settings),
+            .tab(.tab2): .init(root: .settings)
+        ])
     }
     
     enum Action: Equatable {
@@ -25,7 +29,7 @@ struct TestFeature: Reducer {
         case push
         
         case subFeature(SubFeature.Action)
-        case router(RouterFeature<Route>.Action)
+        case router(AppRouterFeature<Route, TabRoute>.Action)
     }
     
     enum Route: Equatable, Identifiable, Codable {
@@ -34,6 +38,14 @@ struct TestFeature: Reducer {
         
         var id: Self {self}
     }
+    
+    enum TabRoute: Equatable, Hashable, Codable, Identifiable, CaseIterable {
+        case tab1
+        case tab2
+        
+        var id: Self {self}
+    }
+    
     func reduce(_ state: inout State, _ action: Action) -> Effect<Action> {
         switch(action) {
         case .buttonTapped:
@@ -58,7 +70,7 @@ struct TestFeature: Reducer {
         case .presentSheet:
             state.router.presentSheet(.settings)
         case .presentCover:
-            state.router.presentCover(.settings)
+            state.router.presentRootScreen(.settings)
         case .dismiss:
             state.router.dismiss()
         case .goBackToRoot:
@@ -72,7 +84,7 @@ struct TestFeature: Reducer {
                 .eraseToAnyPublisher()
             
         case let .router(action):
-            return RouterFeature<Route>().reduce(&state.router, action)
+            return AppRouterFeature<Route, TabRoute>().reduce(&state.router, action)
                 .map { .router($0) }
                 .eraseToAnyPublisher()
         }
