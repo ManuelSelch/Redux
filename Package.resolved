@@ -19,15 +19,6 @@
       }
     },
     {
-      "identity" : "popupview",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/exyte/PopupView.git",
-      "state" : {
-        "revision" : "337430278cd6ceff454c143fe815af364276332b",
-        "version" : "3.0.5"
-      }
-    },
-    {
       "identity" : "pulse",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/kean/Pulse.git",
@@ -43,24 +34,6 @@
       "state" : {
         "revision" : "c6bfd1af48efcc9a9ad203665db12375ba6b145a",
         "version" : "4.0.8"
-      }
-    },
-    {
-      "identity" : "swiftui-introspect",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/siteline/swiftui-introspect",
-      "state" : {
-        "revision" : "807f73ce09a9b9723f12385e592b4e0aaebd3336",
-        "version" : "1.3.0"
-      }
-    },
-    {
-      "identity" : "swiftui-navigation-transitions",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/davdroman/swiftui-navigation-transitions.git",
-      "state" : {
-        "revision" : "ad6ecab3f275fd0ff30959150dec0f14a5b7a245",
-        "version" : "0.13.4"
       }
     }
   ],

@@ -19,15 +19,11 @@ let package = Package(
         .package(url: "https://github.com/Flight-School/AnyCodable.git", .upToNextMajor(from: "0.6.7")),
         .package(url: "https://github.com/kean/Pulse.git", .upToNextMajor(from: "4.2.7")),
         .package(url: "https://github.com/daltoniam/Starscream.git", from: "4.0.6"),
-        .package(url: "https://github.com/davdroman/swiftui-navigation-transitions.git", .upToNextMajor(from: "0.13.4")),
-        .package(url: "https://github.com/exyte/PopupView.git", .upToNextMajor(from: "3.0.5"))
     ],
     targets: [
         .target(
             name: "Redux",
             dependencies: [
-                .product(name: "NavigationTransitions", package: "swiftui-navigation-transitions"),
-                .product(name: "PopupView", package: "PopupView")
             ]
         ),
         .target(
