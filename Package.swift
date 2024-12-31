@@ -12,7 +12,8 @@ let package = Package(
     products: [
         .library(name: "Redux", targets: ["Redux"]),
         .library(name: "ReduxDebug", targets: ["ReduxDebug"]),
-        .library(name: "ReduxTestStore", targets: ["ReduxTestStore"])
+        .library(name: "ReduxTestStore", targets: ["ReduxTestStore"]),
+        .library(name: "ReduxTestStore_SwiftTesting", targets: ["ReduxTestStore_SwiftTesting"])
     ],
     dependencies: [
         .package(url: "https://github.com/ManuelSelch/Dependencies.git", .upToNextMajor(from: "1.0.0")),
@@ -37,6 +38,13 @@ let package = Package(
         ),
         .target(
             name: "ReduxTestStore",
+            dependencies: [
+                "Redux",
+                .product(name: "Dependencies", package: "Dependencies")
+            ]
+        ),
+        .target(
+            name: "ReduxTestStore_SwiftTesting",
             dependencies: [
                 "Redux",
                 .product(name: "Dependencies", package: "Dependencies")
